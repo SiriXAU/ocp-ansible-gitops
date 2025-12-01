@@ -17,16 +17,16 @@ This repository provides a declarative, GitOps-native approach to deploying and 
 
 ```
 ocp-ansible-gitops/
-├── bootstrap/
-│   └── root-app.yaml           # Argo CD Application manifests
-├── components/
-│   ├── aap-operator/           # AAP Operator deployment
-│   │   ├── kustomization.yaml  # Operator Kustomize config
-│   │   └── rbac.yaml           # RBAC for Argo CD
-│   └── aap-instance/           # AAP Platform instance
-│       ├── kustomization.yaml  # Instance Kustomize config
-│       └── platform.yaml       # AAP CR configuration
-└── README.md
+|-- bootstrap/
+|   `-- root-app.yaml           # Argo CD Application manifests
+|-- components/
+|   |-- aap-operator/           # AAP Operator deployment
+|   |   |-- kustomization.yaml  # Operator Kustomize config
+|   |   `-- rbac.yaml           # RBAC for Argo CD
+|   `-- aap-instance/           # AAP Platform instance
+|       |-- kustomization.yaml  # Instance Kustomize config
+|       `-- platform.yaml       # AAP CR configuration
+`-- README.md
 ```
 
 ## Components
@@ -281,12 +281,12 @@ oc apply -k components/aap-operator/
 
 The deployment follows this sequence:
 
-1. **Bootstrap Applied** � Argo CD creates two Application resources
-2. **Operator Deployed** � AAP Operator installed via `aap-bootstrap` app
-3. **Operator Ready** � CRDs registered, operator pod running
-4. **Instance Deployed** � AAP Platform CR created via `aap-instance` app
-5. **Reconciliation** � Operator creates Gateway, Controller, Hub, Database
-6. **Platform Ready** � All components running, routes accessible
+1. **Bootstrap Applied** � Argo CD creates two Application resources
+2. **Operator Deployed** � AAP Operator installed via `aap-bootstrap` app
+3. **Operator Ready** � CRDs registered, operator pod running
+4. **Instance Deployed** � AAP Platform CR created via `aap-instance` app
+5. **Reconciliation** � Operator creates Gateway, Controller, Hub, Database
+6. **Platform Ready** � All components running, routes accessible
 
 ## Maintenance
 
