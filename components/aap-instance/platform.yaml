@@ -27,6 +27,7 @@ spec:
     replicas: 1
     route_tls_termination_mechanism: Edge
     garbage_collect_secrets: false
+    file_storage_access_mode: ReadWriteOnce
     postgresql_storage_requirements:
       requests:
         storage: 10Gi
