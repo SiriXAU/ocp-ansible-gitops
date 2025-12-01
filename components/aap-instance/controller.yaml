@@ -1,10 +1,12 @@
 apiVersion: automation.ansible.com/v1beta1
 kind: AutomationController
 metadata:
-  name: my-automation-controller
+  name: controller
   namespace: ansible-automation-platform
 spec:
-  replicas: 3
+  replicas: 1
+  
   route_tls_termination_mechanism: Edge
+    
   trash_can_clean_hour: 0
   admin_user: admin
