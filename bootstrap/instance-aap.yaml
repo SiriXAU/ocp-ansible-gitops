@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aap-instance-deploy
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SiriXAU/ocp-ansible-gitops.git
+    targetRevision: HEAD
+    path: components/aap-instance
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ansible-automation-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
