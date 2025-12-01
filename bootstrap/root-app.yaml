@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: aap-operator-install
+  name: aap-bootstrap
   namespace: openshift-gitops
 spec:
   project: default
   source:
     repoURL: https://github.com/SiriXAU/ocp-ansible-gitops.git
     targetRevision: HEAD
-    path: components/aap-operator
+    path: components/aap-operator  # First, install the Operator
   destination:
     server: https://kubernetes.default.svc
     namespace: ansible-automation-platform
@@ -18,3 +18,22 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aap-instance
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SiriXAU/ocp-ansible-gitops.git
+    targetRevision: HEAD
+    path: components/aap-instance  # Then, install the Instance
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ansible-automation-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

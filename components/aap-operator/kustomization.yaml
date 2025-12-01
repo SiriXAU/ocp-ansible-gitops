@@ -2,6 +2,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - namespace.yaml
-  - operator-group.yaml
-  - subscription.yaml
+  # This URL pulls the tested Operator manifests directly from Red Hat CoP
+  - https://github.com/redhat-cop/gitops-catalog/ansible-automation-platform/operator/overlays/stable-2.6?ref=main
