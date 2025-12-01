@@ -1,0 +1,36 @@
+apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap-platform
+  namespace: ansible-automation-platform
+spec:
+  # 1. The Controller (Standard UI)
+  automation_controller:
+    admin_user: admin
+    replicas: 1
+    garbage_collect_secrets: false
+    loadbalancer_port: 80
+    no_log: false
+    projects_persistence: false
+    projects_storage_size: 8Gi
+    route_tls_termination_mechanism: Edge
+    task_privileged: false
+
+  # 2. The Automation Gateway (The new 2.6 component you requested)
+  automation_gateway:
+    replicas: 1
+    route_tls_termination_mechanism: Edge
+    garbage_collect_secrets: false
+
+  # 3. Automation Hub (Optional - remove if not needed)
+  automation_hub:
+    replicas: 1
+    route_tls_termination_mechanism: Edge
+    garbage_collect_secrets: false
+    postgresql_storage_requirements:
+      requests:
+        storage: 10Gi
+
+  # 4. Shared Database Configuration
+  # The Operator will spin up a managed postgres instance for all components
+  # unless you specify external secrets.
