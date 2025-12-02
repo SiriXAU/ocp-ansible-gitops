@@ -45,7 +45,7 @@ Deploys the full AAP 2.6 platform with the following components:
 
 - **Automation Gateway** - New in AAP 2.6, serves as the unified API gateway
 - **Automation Controller** - Standard AAP UI and API (formerly Tower)
-- **Automation Hub** - Container registry and content collections repository
+- **Automation Hub** - Container registry and content collections repository (optional)
 - **PostgreSQL Database** - Operator-managed database for AAP components
 
 ## Prerequisites
@@ -162,7 +162,7 @@ syncPolicy:
 
 **Key Settings:**
 - **Source Repository**: https://github.com/SiriXAU/ocp-ansible-gitops.git
-- **Target Revision**: `main` branch
+- **Target Revision**: `HEAD`
 - **Destination Namespace**: `ansible-automation-platform`
 - **Argo CD Namespace**: `openshift-gitops`
 
@@ -172,30 +172,41 @@ Edit `components/aap-instance/platform.yaml` to customize:
 
 **Automation Controller:**
 ```yaml
-automation_controller_spec:
-  replicas: 1                    # Number of controller replicas
-  admin_user: admin              # Admin username
-  loadbalancer_port: 80          # Service port
-  projects_storage_size: 8Gi     # Persistent storage for projects
+automation_controller:
+  admin_user: admin                        # Admin username
+  replicas: 1                              # Number of controller replicas
+  garbage_collect_secrets: false           # Secret cleanup policy
+  loadbalancer_port: 80                    # Service port
+  no_log: false                            # Logging verbosity
+  projects_persistence: false              # Enable project persistence
+  projects_storage_size: 8Gi               # Persistent storage for projects
+  route_tls_termination_mechanism: Edge    # TLS termination
+  task_privileged: false                   # Privileged task execution
 ```
 
 **Automation Hub:**
 ```yaml
-automation_hub_spec:
-  replicas: 1                    # Number of hub replicas
-  postgres_storage_requirements:
-    limits:
-      storage: 10Gi              # Database storage
+automation_hub:
+  replicas: 1                              # Number of hub replicas
+  route_tls_termination_mechanism: Edge    # TLS termination
+  garbage_collect_secrets: false           # Secret cleanup policy
+  file_storage_access_mode: ReadWriteOnce  # Storage access mode
+  postgresql_storage_requirements:
+    requests:
+      storage: 10Gi                        # Database storage
 ```
 
-**Gateway:**
+**Automation Gateway:**
 ```yaml
-automation_gateway_spec:
-  replicas: 1                    # Number of gateway replicas
-  route_tls_termination_mechanism: Edge  # TLS termination
+automation_gateway:
+  replicas: 1                              # Number of gateway replicas
+  route_tls_termination_mechanism: Edge    # TLS termination
+  garbage_collect_secrets: false           # Secret cleanup policy
 ```
 
 After making changes, commit and push to Git. Argo CD will automatically sync.
+
+**Note:** The current configuration includes all three components (Controller, Gateway, and Hub). You can remove the `automation_hub` section from `platform.yaml` if you don't need the Hub component.
 
 ### Repository Path Configuration
 
@@ -205,7 +216,7 @@ If you fork this repository or change its URL, update the repository reference i
 spec:
   source:
     repoURL: https://github.com/<your-org>/ocp-ansible-gitops.git  # Update this
-    targetRevision: main
+    targetRevision: HEAD
 ```
 
 ## Accessing AAP
@@ -217,10 +228,10 @@ Once deployed, access AAP components via their routes:
 oc get routes -n ansible-automation-platform
 
 # Get Automation Controller URL
-oc get route <controller-route-name> -n ansible-automation-platform -o jsonpath='{.spec.host}'
+oc get route -n ansible-automation-platform -l app.kubernetes.io/component=automation-controller-service
 
-# Get admin password
-oc get secret <platform-name>-admin-password -n ansible-automation-platform -o jsonpath='{.data.password}' | base64 -d
+# Get admin password (replace aap-platform with your platform name if different)
+oc get secret aap-platform-admin-password -n ansible-automation-platform -o jsonpath='{.data.password}' | base64 -d
 ```
 
 Default credentials:
@@ -254,7 +265,7 @@ Check the AnsibleAutomationPlatform resource:
 
 ```bash
 oc get ansibleautomationplatform -n ansible-automation-platform
-oc describe ansibleautomationplatform <platform-name> -n ansible-automation-platform
+oc describe ansibleautomationplatform aap-platform -n ansible-automation-platform
 ```
 
 Check operator logs:
@@ -281,12 +292,12 @@ oc apply -k components/aap-operator/
 
 The deployment follows this sequence:
 
-1. **Bootstrap Applied** � Argo CD creates two Application resources
-2. **Operator Deployed** � AAP Operator installed via `aap-bootstrap` app
-3. **Operator Ready** � CRDs registered, operator pod running
-4. **Instance Deployed** � AAP Platform CR created via `aap-instance` app
-5. **Reconciliation** � Operator creates Gateway, Controller, Hub, Database
-6. **Platform Ready** � All components running, routes accessible
+1. **Bootstrap Applied** - Argo CD creates two Application resources
+2. **Operator Deployed** - AAP Operator installed via `aap-bootstrap` app
+3. **Operator Ready** - CRDs registered, operator pod running
+4. **Instance Deployed** - AAP Platform CR created via `aap-instance` app
+5. **Reconciliation** - Operator creates Gateway, Controller, Hub, Database
+6. **Platform Ready** - All components running, routes accessible
 
 ## Maintenance
 
@@ -302,7 +313,9 @@ Update the operator channel in `components/aap-operator/kustomization.yaml`:
 
 ```yaml
 resources:
-  - https://github.com/redhat-cop/gitops-catalog/ansible-automation-platform/operator/overlays/stable-2.7  # Update version
+  # Update the version number (stable-2.6 to stable-2.7, etc.)
+  - https://github.com/redhat-cop/gitops-catalog/ansible-automation-platform/operator/overlays/stable-2.7?ref=main
+  - rbac.yaml
 ```
 
 ### Backing Up Configuration
@@ -311,7 +324,7 @@ All configuration is stored in Git. To back up runtime data:
 
 ```bash
 # Backup the platform CR
-oc get ansibleautomationplatform -n ansible-automation-platform -o yaml > backup-platform.yaml
+oc get ansibleautomationplatform aap-platform -n ansible-automation-platform -o yaml > backup-platform.yaml
 
 # Backup secrets
 oc get secrets -n ansible-automation-platform -o yaml > backup-secrets.yaml
